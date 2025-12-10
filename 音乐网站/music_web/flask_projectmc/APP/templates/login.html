@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>密码验证</title>
+  <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
+  <style>
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh; /* 使容器高度占满整个视窗 */
+      background-color: #f8f9fa; /* 浅灰色背景 */
+    }
+    .login-card {
+      width: 300px; /* 固定宽度 */
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container" style="background-image: linear-gradient(to top, #a8edea 0%, #fed6e3 100%);">
+    <div class="card login-card border-dark" style="background-image: linear-gradient(to top, #a8edea 0%, #fed6e3 100%);;">
+      <div class="card-header text-center text-white">
+        login
+      </div>
+      <div class="card-body">
+        <form action="/login/" method="post">
+          <div class="mb-3">
+            <label for="key1" class="form-label">key1：</label>
+            <input type="password" class="form-control" id="key1" name="key1">
+          </div>
+          <div class="mb-3">
+            <label for="key2" class="form-label">key2：</label>
+            <input type="password" class="form-control" id="key2" name="key2">
+          </div>
+          <div class="mb-3">
+            <label for="offset" class="form-label">偏移量：</label>
+            <input type="password" class="form-control" id="offset" name="offset">
+          </div>
+          <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-info">登录</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+</body>
+</html>

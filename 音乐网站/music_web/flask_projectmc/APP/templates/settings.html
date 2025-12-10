@@ -1,0 +1,63 @@
+{% extends "music_base.html" %}
+
+{% block content %}
+
+<div id="content" class="col-md-9 d-flex flex-column justify-content-center align-items-center"
+    style="background: linear-gradient(to top,#272727,#f9f9f9);">
+    <div class="container mt-3" style="width: 80%;">
+        <div class="card border-dark mb-3">
+            <div class="card-header bg-dark text-white text-center">
+                设置
+            </div>
+            <div class="card-body">
+                <form action="/admin/" method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">请输入新的名字：</label>
+                        <input type="text" class="form-control" name="username" value="{{ data.name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">更改密码：</label>
+                        <input type="password" class="form-control" name="password" value="{{ data.passwd }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="flag" class="form-label">搜索页面索引歌曲数(建议不要超过6)：</label>
+                        <input type="text" class="form-control" name="flag" placeholder="6" value="{{ data.flag }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="uKey" class="form-label">U-key值：</label>
+                        <input type="text" class="form-control" name="uKey" placeholder="U-key" value="">
+                    </div>
+                    <div class="mb-3">
+                        <label for="sit" class="form-label">歌曲下载地址：</label>
+                        <input type="text" class="form-control" name="sit" placeholder="C:/QMusic/" value="{{ data.sit }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">选择主题样式：</label>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="radio" name="theme" id="theme1" value=1 checked>
+                            <label class="form-check-label" for="theme1">
+                                极简主义 <span class="badge bg-black">B</span><span class="badge text-white" style="background-color: #5c636a">W</span>
+                            </label>
+                        </div>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="radio" name="theme" id="theme2" value=2>
+                            <label class="form-check-label" for="theme2">
+                                春意盎然 <span class="badge" style="background-color: pink">P</span><span class="badge bg-success">G</span>
+                            </label>
+                        </div>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="radio" name="theme" id="theme3" value=3>
+                            <label class="form-check-label" for="theme3">
+                                秋的回忆 <span class="badge" style="background-color: orange">O</span><span class="badge bg-warning">Y</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center">
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

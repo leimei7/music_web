@@ -1,0 +1,235 @@
+{% extends "music_base.html" %}
+
+{% block content %}
+<div id="content" class="col-md-9 d-flex flex-column justify-content-center align-items-center" style="background-image: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">歌曲名字</th>
+                <th scope="col">歌手</th>
+                <th scope="col">操作区域</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for i in numbers %}
+            <tr class="music_row" data-name="{{ musics[i].name }}" data-singer="{{ musics[i].singer }}" data-mid="{{ musics[i].mid }}">
+                <th scope="row">{{ (page-1) * 10 + i  + 1 }}</th>
+                <td>{{ musics[i].name }}</td>
+                <td>{{ musics[i].singer }}</td>
+                <td><span class="badge bg-info">取消收藏</span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+<div class="shadow mt-3 w-75" style="background-color:pink;">
+        <div class="card-body p-3 border rounded-lg">
+            <h5 class="card-title text-white">
+                 {{ musics[0].name }}
+            </h5>
+            <h6 class="card-subtitle text-white mt-2">
+                {{ musics[0].singer }}
+            </h6>
+            <audio
+                controls
+                preload="auto"
+                src=" {{ urls[0] }} "
+                class="w-100 mt-3 carousel-audio"
+            ></audio>
+        </div>
+</div>
+<div class="mt-4">
+    <nav aria-label="Page navigation example mx-auto">
+      <ul class="pagination">
+        <li class="page-item">
+          <a class="page-link" href="/collect/{% if page > 1 %}{{ page - 1 }}{% else %}{{ pages }}{% endif %}/" aria-label="Previous">
+            <span aria-hidden="true" class="w-100">&laquo;</span>
+          </a>
+        </li>
+        
+        <!-- 新增页码输入框区域 -->
+        <li class="page-item mx-2">
+          <div class="input-group">
+            <input type="number" id="pageInput" class="form-control" min="1" max="{{ pages }}" value="{{ page }}" 
+                   style="width: 80px; text-align: center;">
+            <button class="btn btn-outline-secondary" onclick="jumpToPage()">
+              跳转
+            </button>
+          </div>
+        </li>
+        
+        <li class="page-item">
+          <a class="page-link" href="/collect/{% if page < pages %}{{ page + 1 }}{% else %}{{ 1 }}{% endif %}/" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<span class="btn text-white auto rounded" style="background-color: pink">循环锁死</span>
+</div>
+    <script>
+
+    let Auto=false;
+
+    function set(){
+        let string = JSON.stringify(Auto)
+        //存储字符串
+        localStorage.setItem("Auto", string)
+    }
+
+    function get() {
+        //读取临时数据库文件，通过key获得数据
+        let string = localStorage.getItem('Auto')
+        //解析数据库内容
+        if (string!==null) {
+            Auto = JSON.parse(string)
+        }
+        else {
+            console.log("获取信息失败")
+        }
+    }
+
+    //3.封装修改数据函数
+    function change(bool) {
+        get()
+        Auto=bool
+        set()
+    }
+
+    window.onload = function () {
+        // 尝试从localStorage中获取数据
+        let string = localStorage.getItem('Auto')
+        // 如果localStorage中有数据，则将其解析并赋值给myData
+        if (string) {
+            Auto = JSON.parse(string)
+            console.log('数据已从localStorage恢复:', Auto)
+        } else {
+            // 如果没有数据则存储
+            set()
+            console.log('localStorage中没有数据，使用初始值')
+        }
+    }
+
+
+    let urls = {{ urls|tojson }};
+    let page = {{ page|tojson }};
+    let auto_play = false;
+
+    let audio = document.getElementsByClassName("carousel-audio")[0]
+    let name = document.getElementsByClassName("card-title")[0]
+    let singer = document.getElementsByClassName("card-subtitle")[0]
+    let music_row = document.getElementsByClassName("music_row")
+    let auto = document.getElementsByClassName("auto")[0]
+    let music_index = 0
+
+    let badge=document.getElementsByClassName("badge")
+
+    if (Auto === false) {
+        console.log('false')
+    }
+    else{
+        audio.play();
+    }
+
+    for (let i = 0; i < badge.length; i++) {
+        badge[i].addEventListener("click", function () {
+             const data = {
+                 mid:music_row[i].getAttribute('data-mid'),
+                 page:page
+             }
+             console.log(data)
+            fetch('/delete/', {
+                method: 'POST',  // 指定请求方法为 POST
+                headers: {
+                    'Content-Type': 'application/json'  // 设置请求头，表明发送的数据是 JSON 格式
+                },
+                body: JSON.stringify(data)  // 将数据转换为 JSON 字符串并作为请求体发送
+            })
+                .then(response => response.json())  // 解析响应为 JSON
+                .then(data => {
+                    console.log(data);  // 打印响应数据
+                })
+                .catch(error => {
+                    console.error('Error:', error);  // 打印错误信息
+                });
+             change(true);
+             console.log('010101010')
+             window.location.href = "/collect/" + page + "/";
+        })
+    }
+
+    //audio.play();
+
+    auto.addEventListener("click", function () {
+        auto_play = !auto_play;
+        if (auto_play) {
+            auto.style.backgroundColor = 'plum'
+        }
+        else {
+            auto.style.backgroundColor = 'pink'
+        }
+    })
+
+    function setAudio(index) {
+        audio.src = urls[index];
+        name.innerHTML = music_row[index].getAttribute('data-name');
+        singer.innerHTML = music_row[index].getAttribute('data-singer');
+        audio.play();
+        music_index = index;
+    }
+
+    for (let i = 0; i < music_row.length; i++) {
+        music_row[i].addEventListener("click", function () {
+            setAudio(i);
+        })
+    }
+
+    audio.addEventListener('ended', function() {
+        if(auto_play){
+            setAudio(music_index);
+        }
+        else {
+            if (music_index < music_row.length - 1) {
+                setAudio(music_index + 1);
+            }
+            else{
+                page=page+1
+                window.location.href = "/collect/" + page + "/";
+            }
+        }
+    });
+
+    // 页码跳转函数
+    function jumpToPage() {
+        const pageInput = document.getElementById('pageInput');
+        let targetPage = parseInt(pageInput.value);
+        
+        // 验证页码有效性
+        if (isNaN(targetPage)) {
+            targetPage = 1;
+        } else if (targetPage < 1) {
+            targetPage = 1;
+        } else if (targetPage > {{ pages }}) {
+            targetPage = {{ pages }};
+        }
+        
+        // 跳转到指定页面
+        window.location.href = "/collect/" + targetPage + "/";
+    }
+
+    // 为输入框添加回车键触发跳转
+    document.getElementById('pageInput').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            jumpToPage();
+        }
+    });
+
+    </script>
+
+    <style>
+    .music_row {
+        cursor: pointer;
+    }
+    </style>
+{% endblock %}    

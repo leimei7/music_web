@@ -1,0 +1,273 @@
+{% extends "music_base.html" %}
+
+{% block content %}
+{% if music.none == False %}
+
+    {% if music.ok == True %}
+
+    <div id="content" class="col-md-9 d-flex flex-column justify-content-center align-items-center">
+
+        <div id="carouselExampleCaptions" class="carousel slide w-75" data-bs-ride="false" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+            <ol class="carousel-indicators">
+            {% for number in music.numbers %}
+                <li data-bs-target="#carouselExampleCaptions" data-bs-slide-to={{ number }} class={% if number == 0 %}active{% endif %}></li>
+            {% endfor %}
+            </ol>
+            <div class="carousel-inner">
+                {% for number in music.numbers %}
+                <div class="carousel-item {% if number == 0 %}active{% endif %}">
+                    <img src="{{ url_for('static', filename= ((number % 6) + 1) ~ '.png') }}" alt="..." class="d-block w-100">
+                    <div class="carousel-caption d-none d-md-block xianshi controlButton">
+                        <h5 class="text-black">{{ music.music_names[number] }}</h5>
+                        <h4 class="text-black mt-2">{{ music.singer_names[number] }}</h4>
+                        <audio controls preload="auto" src="{{ music.music_urls[number] }}" class="w-100 mt-3 carousel-audio"></audio>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <a class="carousel-control-prev" href="#carouselExampleCaptions" role="button" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#carouselExampleCaptions" role="button" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </a>
+        </div>
+
+        {#      进度条     #}
+        <div class="container mt-3">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="progress mt-3 " id="progressBarContainer">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="background-color: pink;" aria-valuenow="0" aria-valuemin="0"
+                        aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="btn text-white mt-3 hidden" id="hiddenLabel" style="background-color: pink">I♡♡♡love♡♡♡it</div>
+
+    </div>
+        <script>
+
+            let music_names = {{ music.music_names|tojson }};
+            let music_mids = {{ music.music_mids|tojson }};
+            let singer_names = {{ music.singer_names|tojson }};
+            let label = document.getElementById('hiddenLabel');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let audios = document.querySelectorAll('.carousel-audio');
+
+            audios.forEach(function(audio) {
+                audio.addEventListener('play', function() {
+                    audios.forEach(function(otherAudio) {
+                        if (otherAudio !== audio) {
+                            otherAudio.pause();
+                        }
+                    });
+                });
+            });
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            let isPressed = false;
+            let progress = 0;
+            const increment = 10; // 每次增加/减少的进度值
+            let interval;
+
+            const controlButton = document.getElementsByClassName('controlButton')
+            const progressBar = document.querySelector('#progressBarContainer .progress-bar');
+
+            for (let i = 0; i < controlButton.length; i++) {
+                controlButton[i].addEventListener('mousedown', function () {
+                    isPressed = true;
+                    interval = setInterval(function () {
+                        if (progress <= 100) {
+                            progress += increment;
+                            progressBar.style.width = progress + '%';
+                            progressBar.setAttribute('aria-valuenow', progress);
+
+                            let timeoutId = null;
+
+                            if (progress === 100) {
+
+                                if (timeoutId !== null) {
+                                    clearTimeout(timeoutId);
+                                }
+
+                                // 设置新的 timeout
+                                timeoutId = setTimeout(function() {
+                                    // Remove hidden class and add visible class
+                                    label.classList.remove('hidden');
+                                    label.classList.add('visible');
+
+                                    // After 0.5 seconds, remove visible class and add hidden class again
+                                    setTimeout(function() {
+                                        label.classList.remove('visible');
+                                        label.classList.add('hidden');
+                                        timeoutId = null; // 重置 timeoutId
+                                    }, 500); // 0.5 seconds
+                                }, 500);
+
+                                console.log(getCurrentCarouselIndex())
+                                const data = {
+                                    name: music_names[getCurrentCarouselIndex()],
+                                    singer: singer_names[getCurrentCarouselIndex()],
+                                    mid: music_mids[getCurrentCarouselIndex()],
+                                }
+                                fetch('/favorite/', {
+                                    method: 'POST',  // 指定请求方法为 POST
+                                    headers: {
+                                        'Content-Type': 'application/json'  // 设置请求头，表明发送的数据是 JSON 格式
+                                    },
+                                    body: JSON.stringify(data)  // 将数据转换为 JSON 字符串并作为请求体发送
+                                })
+                                .then(response => response.json())  // 解析响应为 JSON
+                                .then(data => {
+                                    console.log(data);  // 打印响应数据
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);  // 打印错误信息
+                                });
+                            }
+                        }
+                    }, 100); // 每100毫秒增加一次进度
+                });
+
+                controlButton[i].addEventListener('mouseup', function () {
+                    isPressed = false;
+                    clearInterval(interval); // 清除定时器
+
+                    const decrementInterval = setInterval(function () {
+                        if (progress > 0) {
+                            progress -= increment;
+                            progressBar.style.width = progress + '%';
+                            progressBar.setAttribute('aria-valuenow', progress);
+                        } else {
+                            clearInterval(decrementInterval); // 当进度为0时清除定时器
+                        }
+                    }, 100); // 每100毫秒减少一次进度
+                });
+
+                controlButton[i].addEventListener('mouseleave', function () {
+                    if (isPressed) {
+                        isPressed = false;
+                        clearInterval(interval); // 如果鼠标移出按钮且还在按下状态，则停止增加进度并清除定时器
+
+                        const decrementInterval = setInterval(function () {
+                            if (progress > 0) {
+                                progress -= increment;
+                                progressBar.style.width = progress + '%';
+                                progressBar.setAttribute('aria-valuenow', progress);
+                            } else {
+                                clearInterval(decrementInterval); // 当进度为0时清除定时器
+                            }
+                        }, 100); // 每100毫秒减少一次进度
+                    }
+                });
+
+            }
+        });
+        function getCurrentCarouselIndex() {
+            const carouselInner = document.querySelector('#carouselExampleCaptions .carousel-inner');
+            const activeItem = carouselInner.querySelector('.carousel-item.active');
+            const items = carouselInner.children;
+            const itemArray = Array.from(items);
+            return itemArray.indexOf(activeItem);
+        }
+        </script>
+        <style>
+            #content {
+                background: linear-gradient(135deg, #ff7e5f, #feb47b);
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+            }
+
+            #carouselExampleCaptions {
+                background: rgba(255, 255, 255, 0.2); /* 半透明白色背景，突出内容 */
+                border-radius: 10px;
+                padding: 10px;
+                box-shadow: none; /* 移除轮播图本身的阴影，避免与外层阴影重叠 */
+            }
+
+            /* 轮播图指示器的样式调整 */
+            .carousel-indicators li {
+                background-color: rgba(0, 0, 0, 0.5); /* 深色指示器 */
+                border-radius: 50%; /* 圆形指示器 */
+                width: 10px;
+                height: 10px;
+                margin-right: 5px;
+                margin-left: 5px;
+            }
+
+            .carousel-indicators .active {
+                background-color: rgba(255, 255, 255, 0.8); /* 亮色活动指示器 */
+            }
+
+            /* 轮播图控制按钮的样式调整 */
+            .carousel-control-prev, .carousel-control-next {
+                background-color: rgba(0, 0, 0, 0.5); /* 深色按钮背景 */
+                border-radius: 50%; /* 圆形按钮 */
+                width: 50px;
+                height: 50px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            .carousel-control-prev-icon, .carousel-control-next-icon {
+                filter: invert(1); /* 反色图标，使其更明显 */
+            }
+
+            /* 轮播图内部内容的样式调整 */
+            .carousel-item img {
+                border-radius: 10px; /* 圆角图片 */
+            }
+
+            .carousel-caption {
+                background: rgba(255, 255, 255, 0.8); /* 半透明白色背景，使文字更易读 */
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .carousel-audio {
+                border-radius: 10px; /* 圆角音频播放器 */
+            }
+
+            .xianshi:hover{
+                cursor: pointer;
+            }
+
+            .hidden {
+                opacity: 0; /* Optional: Add opacity transition for smoother effect */
+                transition: opacity 0.5s ease-in-out, display 0.5s 0.5s ease-in-out;
+                /* Note: display transition isn't fully supported in all browsers,
+                         so opacity is used to create a fade effect */
+            }
+
+            .visible {
+                /* Or use inline-block, flex, etc., depending on your layout */
+                opacity: 1;
+                transition: opacity 0.5s ease-in-out;
+            }
+
+        </style>
+
+    {% else %}
+        <div id="content" class="col-md-9 d-flex flex-column justify-content-center align-items-center">
+            <h1 class="text-danger">您的U_key值已经过期</h1>
+            <p class="text-warning">为了您的安全，请求管理员更新您的U_key</p>
+        </div>
+    {% endif %}
+
+{% else %}
+
+    <div id="content" class="col-md-9 d-flex flex-column justify-content-center align-items-center">
+        <h1 class="text-danger">新版本已经上架</h1>
+        <p class="text-warning">请去应用市场更新版本，当前版本：1.0.0</p>
+    </div>
+
+{% endif %}
+
+{% endblock %}
